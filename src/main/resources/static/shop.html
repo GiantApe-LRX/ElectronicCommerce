@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+		<style>
+			#container{
+				margin: 0 auto;
+				text-align: center;
+				width: 1000px;
+				border: 2px solid gray;
+			}
+			.header{
+				margin: 10px;
+				border: 1px solid gray;
+			}
+			.header .title{
+				color: rgb(53, 73, 93);
+				background: rgb(65, 184, 131);
+			}
+			.logo{
+				position: relative;
+				top: 12px;
+			}
+			.form-wrap{
+				margin: 10px;
+				padding-bottom: 10px;
+				border: 1px solid gray;
+			}
+			.sub_title{
+				color: rgb(65, 184, 131);
+				background: rgb(53, 73, 93);
+				font-size: 30px;
+			}
+			.form-wrap .content{
+				line-height: 35px;
+			}
+			.form-btn{
+				padding: 12px;
+			}
+			.table-wrap{
+				margin: 10px;
+				padding-bottom: 10px;	
+				border: 1px solid gray;
+			}
+			.table-wrap th{
+				width: 80px;
+				color: #fff;
+				background: rgb(53, 73, 93);
+			}
+		</style>
+	</head>
+	<body>
+		<div id="container">
+			<div class="header">
+				<img class="logo" :src="imgUrl+imgName" alt="" height="63px" width="180px" />
+				<h1 class="title">商品管理</h1>
+			</div>
+			<div class="form-wrap">
+				<div class="sub_title">添加商品</div>
+				<div class="content">
+					商品编号：<input type="text" placeholder="请输入商品编号" v-model="goods.id" /><br />
+					商品名称：<input type="text" placeholder="请输入商品名称" v-model="goods.name"/><br />
+					商品价格：<input type="text" placeholder="请输入商品价格" v-model="goods.price"/><br />
+					商品数量：<input type="text" placeholder="请输入商品数量" v-model="goods.num"/><br />
+					商品类型：<select v-model="goods.type">
+						<option value="" disabled="disabled">--请选择--</option>
+						<option v-for="type in goodsType">{{type}}</option>
+					</select>
+				</div>
+				<div class="form-btn">
+					<button @click="addGoods">确认添加</button>
+					<button>重置信息</button>
+				</div>
+			</div>
+			<div class="table-wrap">
+				<div class="sub_title">商品列表</div>
+				{{delArr}}
+				<table border="1" align="center">
+					<tr>
+						<th>序号</th>
+						<th>编号</th>
+						<th>名称</th>
+						<th>价格</th>
+						<th>数量</th>
+						<th>类型</th>
+						<th>删除</th>
+						<th>选择</th>
+					</tr>
+					<tr v-show="goodsArray.length<=0">
+						<td :colspan="colNum" height="150px">暂无商品</td>
+					</tr>
+					<tr v-for="(item, index) in goodsArray" :key="item.id">
+						<td>{{index}}</td>
+						<td>{{item.id}}</td>
+						<td>{{item.name}}</td>
+						<td>{{item.price}}</td>
+						<td>{{item.num}}</td>
+						<td>{{item.type}}</td>
+						<td><a href="#" @click="delGoods(item.id)">删除</a></td>
+						<td><input type="checkbox" :value="item.id" v-model="delArr" /></td>
+					</tr>
+				</table>
+				<div class="form-btn">
+					<a href="#" @click="delSelect" v-show="goodsArray.length>0">删除选择</a>
+					<a href="#" @click="clearGoodsArray" v-show="goodsArray.length>0">清空</a>
+				</div>
+			</div>
+		</div>
+	</body>
+	<script>
+		var vm = new Vue({
+			el:"#container",
+			data:{
+				imgUrl:"img/",
+				imgName:"1.png",
+				goodsType:["零食", "电子产品", "生活用品"],
+				goodsArray:[],
+				goods:{
+					id:'',
+					name:'',
+					price:'',
+					num:'',
+					type:''
+				},
+				delArr:[],
+				colNum:8
+			},
+			created:function () {
+				this.show();
+			},
+			methods:{
+				addGoods(){
+					_this = this;
+					$.ajax({
+						url:"/goods/insertGoods",
+						data:_this.goods,
+						type:"post",
+						success:function () {
+							alert("添加成功");
+							_this.show();
+						},
+						error:function () {
+							alert("添加失败");
+						}
+					});
+					_this.show();
+				},
+				delGoods(id){
+					_this = this;
+					$.ajax({
+						url:"/goods/delete",
+						data:JSON.stringify([id]),
+						contentType: "application/json; charset=utf-8",
+						type:"post",
+						success:function () {
+							alert("删除成功");
+							_this.show();
+						},
+						error:function (rel) {
+							alert(rel+"删除失败");
+						}
+					});
+					_this.show();
+				},
+				delSelect(){
+					// this.delArr.sort((a, b)=>{
+					// 	return a-b;
+					// });
+					// var len = this.delArr.length;
+					// for(var i = 0; i < len; i++){
+					// 	this.goodsArray.splice(this.delArr[i]-i, 1);
+					// }
+					// this.delArr=[];
+					_this = this;
+					$.ajax({
+						url:"/goods/delete",
+						data:JSON.stringify(_this.delArr),
+						contentType: "application/json; charset=utf-8",
+						type:"post",
+						success:function () {
+							alert("删除成功");
+							_this.show();
+							_this.delArr=[];
+						},
+						error:function (rel) {
+							alert(rel+"删除失败");
+						}
+					});
+					_this.show();
+				},
+				clearGoodsArray(){
+					// this.goodsArray = [];
+					_this = this;
+					$.ajax({
+						url:"/goods/clearGoods",
+						contentType: "application/json; charset=utf-8",
+						type:"post",
+						success:function () {
+							alert("清除成功");
+							_this.show();
+						},
+						error:function (rel) {
+							alert(rel+"清除失败");
+						}
+					});
+					_this.show();
+				},
+
+				show(){
+					$.ajax({
+						url:"/goods/findAll",
+						contentType:"application/json;charset=utf-8",
+						dataType:"json",
+						success:function(data){
+							vm.goodsArray = data.data;
+						}
+					})
+				}
+			}
+		});
+		
+	</script>
+</html>
+
+
